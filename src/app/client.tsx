@@ -2,8 +2,23 @@
 
 import { useEffect, useState } from "react";
 
+// Extend the Window interface to include our global variable
+declare global {
+  interface Window {
+    __INITIAL_TIME__?: number;
+  }
+}
+
+// Function to get the initial time from the global variable or fallback to current time
+function getInitialTime() {
+  if (typeof window !== "undefined" && window.__INITIAL_TIME__) {
+    return new Date(window.__INITIAL_TIME__);
+  }
+  return new Date();
+}
+
 export default function Client() {
-  const [time, setTime] = useState(new Date(Date.now() - 5000));
+  const [time, setTime] = useState(getInitialTime);
 
   // Update time every second
   useEffect(() => {
@@ -42,6 +57,7 @@ export default function Client() {
           strokeWidth="1"
           transform={`rotate(${secondRotation}, 50, 50)`}
           style={{ transition: "transform 0.1s linear" }}
+          suppressHydrationWarning
         />
       </svg>
     </div>

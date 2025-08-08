@@ -11,7 +11,7 @@ interface PreArgs {
 }
 
 declare const $useState: typeof useState;
-declare const $ref: typeof useRef;
+declare const $useRef: typeof useRef;
 declare const $pre: (fn: (args: PreArgs) => void) => void;
 
 export default function Client() {
@@ -32,7 +32,7 @@ function Clock() {
   "use before interactive";
 
   const [time, setTime] = $useState(new Date());
-  const secondHand = $ref<SVGLineElement>(null);
+  const secondHand = $useRef<SVGLineElement>(null);
 
   const secondRotation = time.getSeconds() * 6 + time.getMilliseconds() * 0.006;
 
@@ -92,18 +92,23 @@ function Input() {
     }
     return "";
   });
-  const input = $ref<HTMLInputElement>(null);
+
+  const updateUrl = (value: string) => {
+    window.history.pushState(
+      {},
+      "",
+      `${window.location.pathname}?value=${value}`
+    );
+  };
+
+  const input = $useRef<HTMLInputElement>(null);
 
   $pre(({ listenUntilHydrated }) => {
     if (input.current) {
       const i = input.current;
       i.value = value;
       listenUntilHydrated(input.current, "input", () => {
-        window.history.pushState(
-          {},
-          "",
-          `${window.location.pathname}?value=${i.value}`
-        );
+        updateUrl(i.value);
         setValue(i.value);
       });
       i.focus();
@@ -115,7 +120,10 @@ function Input() {
       <input
         ref={input}
         value={value}
-        onChange={(e) => setValue(e.target.value)}
+        onChange={(e) => {
+          updateUrl(e.target.value);
+          setValue(e.target.value);
+        }}
       />
     </div>
   );

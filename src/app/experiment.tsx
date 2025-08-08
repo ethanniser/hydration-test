@@ -1,25 +1,25 @@
 "use client";
 
-import { useQueryState } from "nuqs";
 import React, { useEffect, useRef, useState } from "react";
 
 interface PreArgs {
-  listenUntilHydrated: (
-    element: HTMLElement,
-    event: string,
-    callback: (e: Event) => void
-  ) => void;
   whenAvailable<T extends HTMLElement>(
-    ref: React.RefObject<T> | React.MutableRefObject<T | null>,
+    ref: React.RefObject<T | null>,
     fn: (el: T) => void
   ): void;
 }
 
 declare const $useState: typeof useState;
 declare const $useRef: typeof useRef;
+/**
+ * Inside $pre, you can:
+ * - read or write to $state's
+ * - read or write to $refs
+ * - do anything to the DOM
+ */
 declare const $pre: {
   (fn: (args: PreArgs) => void): void;
-  effect: (fn: () => void | (() => void), deps?: unknown[]) => void;
+  effect: (fn: () => void | (() => void)) => void;
 };
 
 export default function Client() {
@@ -30,11 +30,6 @@ export default function Client() {
     </>
   );
 }
-
-// a way to define a initial server state
-// a way to define a fn for deriving before interactive state on the client
-// a way to set the elements that depend on that state
-// a way for react to gracefully initialize with the state on the client
 
 function Clock() {
   "use before interactive";
@@ -116,7 +111,7 @@ function Input() {
   const input = $useRef<HTMLInputElement>(null);
 
   $pre(({ whenAvailable }) => {
-    whenAvailable<HTMLInputElement>(input, (i) => {
+    whenAvailable(input, (i) => {
       // initialize value before paint
       i.value = value;
       // keep URL and handoff state in sync until hydration, then auto-cleanup
@@ -127,7 +122,7 @@ function Input() {
         };
         i.addEventListener("input", onInput);
         return () => i.removeEventListener("input", onInput);
-      }, []);
+      });
       i.focus();
     });
   });

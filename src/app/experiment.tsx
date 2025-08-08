@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryState } from "nuqs";
 import React, { useEffect, useRef, useState } from "react";
 
 interface PreArgs {
@@ -8,11 +9,18 @@ interface PreArgs {
     event: string,
     callback: (e: Event) => void
   ) => void;
+  whenAvailable<T extends HTMLElement>(
+    ref: React.RefObject<T> | React.MutableRefObject<T | null>,
+    fn: (el: T) => void
+  ): void;
 }
 
 declare const $useState: typeof useState;
 declare const $useRef: typeof useRef;
-declare const $pre: (fn: (args: PreArgs) => void) => void;
+declare const $pre: {
+  (fn: (args: PreArgs) => void): void;
+  effect: (fn: () => void | (() => void), deps?: unknown[]) => void;
+};
 
 export default function Client() {
   return (
@@ -37,10 +45,14 @@ function Clock() {
   const secondRotation = time.getSeconds() * 6 + time.getMilliseconds() * 0.006;
 
   $pre(() => {
+    const now = new Date();
+    setTime(now);
     if (secondHand.current) {
+      const initialRotation =
+        now.getSeconds() * 6 + now.getMilliseconds() * 0.006;
       secondHand.current.setAttribute(
         "transform",
-        `rotate(${secondRotation}, 50, 50)`
+        `rotate(${initialRotation}, 50, 50)`
       );
     }
   });
@@ -103,16 +115,21 @@ function Input() {
 
   const input = $useRef<HTMLInputElement>(null);
 
-  $pre(({ listenUntilHydrated }) => {
-    if (input.current) {
-      const i = input.current;
+  $pre(({ whenAvailable }) => {
+    whenAvailable<HTMLInputElement>(input, (i) => {
+      // initialize value before paint
       i.value = value;
-      listenUntilHydrated(input.current, "input", () => {
-        updateUrl(i.value);
-        setValue(i.value);
-      });
+      // keep URL and handoff state in sync until hydration, then auto-cleanup
+      $pre.effect(() => {
+        const onInput = () => {
+          updateUrl(i.value);
+          setValue(i.value);
+        };
+        i.addEventListener("input", onInput);
+        return () => i.removeEventListener("input", onInput);
+      }, []);
       i.focus();
-    }
+    });
   });
 
   return (

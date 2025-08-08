@@ -1,5 +1,5 @@
-import Client from "./client";
+import ClientOut from "./experiment.out";
 
 export default function Home() {
-  return <Client />;
+  return <ClientOut />;
 }

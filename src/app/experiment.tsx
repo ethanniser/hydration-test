@@ -55,7 +55,7 @@ function Clock() {
   useEffect(() => {
     const timer = setInterval(() => {
       setTime(new Date());
-    }, 10);
+    }, 100);
     return () => clearInterval(timer);
   }, []);
 

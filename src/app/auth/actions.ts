@@ -40,18 +40,21 @@ async function setSession({
     expires: expiresInOneDay.toISOString(),
     user: { id: userId },
   };
+
+  // here we just set the metadata directly
+  // but because this cookie is much less secure, it should *always* be derived from the encrypted session
+  // so that would usually look like a db lookup to get the profile picture url based on the user id
   const metadata: MetadataData = {
     profilePictureUrl,
   };
   const encryptedSession = await signToken(session);
-  const encryptedMetadata = await signToken(metadata);
   (await cookies()).set("session", encryptedSession, {
     expires: expiresInOneDay,
     httpOnly: true,
     secure: true,
     sameSite: "lax",
   });
-  (await cookies()).set("metadata", encryptedMetadata, {
+  (await cookies()).set("metadata", JSON.stringify(metadata), {
     expires: expiresInOneDay,
     httpOnly: false, // this is safe because it's not sensitive data, and never used at the source of truth
     secure: true,
@@ -63,10 +66,8 @@ export async function getSession() {
   const session = (await cookies()).get("session")?.value;
   const metadata = (await cookies()).get("metadata")?.value;
   if (!session || !metadata) return null;
-  const [sessionData, metadataData] = await Promise.all([
-    verifyToken<SessionData>(session),
-    verifyToken<MetadataData>(metadata),
-  ]);
+  const sessionData = await verifyToken<SessionData>(session);
+  const metadataData = JSON.parse(metadata) as MetadataData;
   return {
     session: sessionData,
     metadata: metadataData,

@@ -14,51 +14,111 @@ export default function Page() {
         </div>
         <div className="flex flex-col items-center justify-center">
           <h1 className="text-2xl font-bold">Fixed</h1>
-          <ProfilePictureOrSigninButton />
+          <ProfilePictureOrSigninButton initStateFromCookie />
         </div>
       </div>
       <YouAreLoggedInOrSignOutButton />
       <HydrationIndicator />
-      <script src="/api/slow.js"></script>
     </div>
   );
 }
 
-function ProfilePictureOrSigninButton() {
-  const auth = useAuth();
-  if (!auth) return "loading...";
+function Box({ children, id }: { children: React.ReactNode; id?: string }) {
   return (
-    <div className="size-64 flex items-center justify-center ">
-      {auth.isSignedIn ? (
-        <ProfilePicture url={auth.profilePictureUrl} />
-      ) : (
-        <SigninButton />
-      )}
+    <div className="size-64 flex items-center justify-center" id={id}>
+      {children}
     </div>
+  );
+}
+
+function ProfilePictureOrSigninButton({
+  initStateFromCookie,
+}: {
+  initStateFromCookie?: boolean;
+}) {
+  const auth = useAuth();
+  return (
+    <>
+      <Box id={initStateFromCookie ? "auth" : undefined}>
+        {auth ? (
+          auth.isSignedIn ? (
+            <ProfilePicture url={auth.profilePictureUrl} />
+          ) : (
+            <SigninButton />
+          )
+        ) : (
+          <p>loading...</p>
+        )}
+      </Box>
+      {initStateFromCookie && (
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(${() => {
+              function parseCookie(cookie: string) {
+                return cookie
+                  .split(";")
+                  .reduce((acc: Record<string, string>, cookie) => {
+                    const [key, value] = cookie.split("=");
+                    acc[key.trim()] = decodeURIComponent(value.trim());
+                    return acc;
+                  }, {});
+              }
+
+              const auth = document.getElementById("auth");
+              if (!auth) {
+                console.error("auth element not found");
+                return;
+              }
+              const cookies = parseCookie(document.cookie);
+              const metadata = JSON.parse(cookies.metadata);
+              const profilePictureUrl = metadata.profilePictureUrl;
+              if (profilePictureUrl) {
+                const image = document.createElement("img");
+                image.src = profilePictureUrl;
+                image.alt = "Profile Picture";
+                image.className = "size-32 rounded-full";
+                auth.innerHTML = "";
+                auth.appendChild(image);
+              } else {
+                const signinButton = document.createElement("button");
+                signinButton.innerHTML = "Sign in";
+                signinButton.className =
+                  "bg-blue-500 text-white p-2 rounded-md";
+                auth.innerHTML = "";
+                auth.appendChild(signinButton);
+              }
+            }})()`,
+          }}
+        />
+      )}
+    </>
   );
 }
 
 function YouAreLoggedInOrSignOutButton() {
   const auth = useAuth();
-  if (!auth) return "loading...";
   return (
-    <div className="size-64 flex items-center justify-center ">
-      {auth.isSignedIn ? (
-        <button
-          onClick={auth.signOut}
-          className="bg-red-500 text-white p-2 rounded-md"
-        >
-          Sign out
-        </button>
+    <Box>
+      {auth ? (
+        auth.isSignedIn ? (
+          <button
+            onClick={auth.signOut}
+            className="bg-red-500 text-white p-2 rounded-md"
+          >
+            Sign out
+          </button>
+        ) : (
+          <button
+            onClick={auth.signIn}
+            className="bg-green-500 text-white p-2 rounded-md"
+          >
+            Sign in
+          </button>
+        )
       ) : (
-        <button
-          onClick={auth.signIn}
-          className="bg-green-500 text-white p-2 rounded-md"
-        >
-          Sign in
-        </button>
+        <p>loading...</p>
       )}
-    </div>
+    </Box>
   );
 }
 

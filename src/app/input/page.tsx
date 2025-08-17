@@ -16,7 +16,6 @@ export default function Page() {
         </div>
       </div>
       <HydrationIndicator />
-      <script src="/api/slow.js"></script>
     </div>
   );
 }

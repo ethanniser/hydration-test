@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-// artifically delay hydration
-import "./slow-module";
 
 export default function Page() {
   return (
@@ -18,6 +16,7 @@ export default function Page() {
         </div>
       </div>
       <HydrationIndicator />
+      <script src="/api/slow.js"></script>
     </div>
   );
 }
@@ -33,23 +32,30 @@ function Input({ initValueFromDOM }: { initValueFromDOM?: boolean }) {
     return "";
   });
 
+  useIsHydrated(); // idk why this is needed- react is weird
+
   return (
-    <>
+    <div key={Date.now()}>
       <input
         id={initValueFromDOM ? "input" : undefined}
         value={value}
         onChange={(e) => setValue(e.target.value)}
         className="border-2 border-gray-300 rounded-md p-2 text-lg"
       />
-    </>
+    </div>
   );
 }
 
-function HydrationIndicator() {
+function useIsHydrated() {
   const [hasHydrated, setHasHydrated] = useState(false);
   useEffect(() => {
     setHasHydrated(true);
   }, []);
+  return hasHydrated;
+}
+
+function HydrationIndicator() {
+  const hasHydrated = useIsHydrated();
   if (!hasHydrated) {
     return (
       <div className="bg-red-600 text-white p-2 rounded-md">

@@ -5,12 +5,16 @@ import { useEffect, useState } from "react";
 
 export default function Page() {
   return (
-    <div className="flex flex-col items-center justify-center h-screen">
-      <h1 className="text-2xl font-bold">Broken</h1>
-      <Clock />
-      <h1 className="text-2xl font-bold">Fixed</h1>
-      <Clock lineId="second-hand" />
-      <InlineScript />
+    <div className="flex flex-row items-center justify-center h-screen">
+      <div className="flex flex-col items-center justify-center">
+        <h1 className="text-2xl font-bold">Broken</h1>
+        <Clock />
+      </div>
+      <div className="flex flex-col items-center justify-center">
+        <h1 className="text-2xl font-bold">Fixed</h1>
+        <Clock lineId="second-hand" />
+        <InlineScript />
+      </div>
     </div>
   );
 }

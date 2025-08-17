@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getSession, signin, signout } from "./actions";
 
@@ -36,7 +36,8 @@ function ProfilePictureOrSigninButton({
 }: {
   initStateFromCookie?: boolean;
 }) {
-  const auth = useAuth();
+  const auth = useAuth({ initStateFromCookie });
+
   return (
     <>
       <Box id={initStateFromCookie ? "auth" : undefined}>
@@ -70,6 +71,9 @@ function ProfilePictureOrSigninButton({
                 return;
               }
               const cookies = parseCookie(document.cookie);
+              if (!cookies.metadata) {
+                return;
+              }
               const metadata = JSON.parse(cookies.metadata);
               const profilePictureUrl = metadata.profilePictureUrl;
               if (profilePictureUrl) {
@@ -79,6 +83,7 @@ function ProfilePictureOrSigninButton({
                 image.className = "size-32 rounded-full";
                 auth.innerHTML = "";
                 auth.appendChild(image);
+                auth.dataset.inlineInit = "pfp";
               } else {
                 const signinButton = document.createElement("button");
                 signinButton.innerHTML = "Sign in";
@@ -86,6 +91,7 @@ function ProfilePictureOrSigninButton({
                   "bg-blue-500 text-white p-2 rounded-md";
                 auth.innerHTML = "";
                 auth.appendChild(signinButton);
+                auth.dataset.inlineInit = "signin";
               }
             }})()`,
           }}
@@ -96,7 +102,8 @@ function ProfilePictureOrSigninButton({
 }
 
 function YouAreLoggedInOrSignOutButton() {
-  const auth = useAuth();
+  const auth = useAuth({ initStateFromCookie: false });
+  console.log("auth", auth);
   return (
     <Box>
       {auth ? (
@@ -134,12 +141,56 @@ type Auth =
       signIn: () => void;
     };
 
-function useAuth(): Auth | null {
-  const queryClient = useQueryClient();
-  const { data, isLoading } = useQuery({
+function parseCookie(cookie: string) {
+  return cookie.split(";").reduce((acc: Record<string, string>, cookie) => {
+    const [key, value] = cookie.split("=");
+    acc[key.trim()] = decodeURIComponent(value.trim());
+    return acc;
+  }, {});
+}
+
+function useSeededSession() {
+  const initialData = (() => {
+    if (typeof window !== "undefined") {
+      const cookies = parseCookie(document.cookie);
+      if (cookies.metadata) {
+        const metadata = JSON.parse(cookies.metadata);
+        if (metadata.profilePictureUrl) {
+          return {
+            sessionData: null,
+            metadata,
+          };
+        }
+      }
+    }
+    return undefined;
+  })();
+
+  return useQuery({
+    queryKey: ["auth"],
+    queryFn: getSession,
+    initialData: initialData as any as Awaited<ReturnType<typeof getSession>>,
+  });
+}
+
+function useNormalSession() {
+  return useQuery({
     queryKey: ["auth"],
     queryFn: getSession,
   });
+}
+
+function useAuth({
+  initStateFromCookie,
+}: {
+  initStateFromCookie?: boolean;
+}): Auth | null {
+  const queryClient = useQueryClient();
+
+  const seededSession = useSeededSession();
+  const normalSession = useNormalSession();
+
+  const data = initStateFromCookie ? seededSession.data : normalSession.data;
 
   const { mutate: signinMutation } = useMutation({
     mutationFn: signin,
@@ -154,7 +205,7 @@ function useAuth(): Auth | null {
     },
   });
 
-  if (isLoading) return null;
+  if (data === undefined) return null;
 
   if (data) {
     return {

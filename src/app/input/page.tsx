@@ -35,14 +35,12 @@ function Input({ initValueFromDOM }: { initValueFromDOM?: boolean }) {
   useIsHydrated(); // idk why this is needed- react is weird
 
   return (
-    <div key={Date.now()}>
-      <input
-        id={initValueFromDOM ? "input" : undefined}
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        className="border-2 border-gray-300 rounded-md p-2 text-lg"
-      />
-    </div>
+    <input
+      id={initValueFromDOM ? "input" : undefined}
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      className="border-2 border-gray-300 rounded-md p-2 text-lg"
+    />
   );
 }
 

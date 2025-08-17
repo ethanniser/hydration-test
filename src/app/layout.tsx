@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
+import { Providers } from "./providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,27 +30,32 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
-        <header className="w-full flex justify-center py-6">
-          <div className="flex gap-2 text-2xl">
-            <Link href="/" className="hover:underline">
-              Clock
+        <Providers>
+          <header className="w-full flex justify-center py-6">
+            <div className="flex gap-2 text-2xl">
+              <Link href="/" className="hover:underline">
+                Clock
+              </Link>
+              <Link href="/input" className="hover:underline">
+                Input
+              </Link>
+              <Link href="/auth" className="hover:underline">
+                Auth
+              </Link>
+            </div>
+          </header>
+          <main className="flex-1 flex flex-col items-center justify-center">
+            {children}
+          </main>
+          <footer className="w-full flex justify-center py-6">
+            <Link
+              href="https://github.com/ethanniser/hydration-test"
+              className="hover:underline"
+            >
+              Source
             </Link>
-            <Link href="/input" className="hover:underline">
-              Input
-            </Link>
-          </div>
-        </header>
-        <main className="flex-1 flex flex-col items-center justify-center">
-          {children}
-        </main>
-        <footer className="w-full flex justify-center py-6">
-          <Link
-            href="https://github.com/ethanniser/hydration-test"
-            className="hover:underline"
-          >
-            Source
-          </Link>
-        </footer>
+          </footer>
+        </Providers>
       </body>
     </html>
   );

@@ -19,8 +19,21 @@ export default function Page() {
   );
 }
 
+declare global {
+  interface Window {
+    __INITIAL_TIME__?: number;
+  }
+}
+
 function Clock({ lineId }: { lineId?: string }) {
-  const [time, setTime] = useState(() => new Date());
+  const [time, setTime] = useState(() => {
+    // On client, use the initial time from the inline script
+    if (typeof window !== "undefined" && window.__INITIAL_TIME__) {
+      return new Date(window.__INITIAL_TIME__);
+    }
+    // On server, use the current time
+    return new Date();
+  });
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -58,7 +71,6 @@ function Clock({ lineId }: { lineId?: string }) {
           transform={`rotate(${secondRotation}, 50, 50)`}
           style={{ transition: "transform 0.1s linear" }}
           id={lineId}
-          suppressHydrationWarning
         />
       </svg>
     </div>
@@ -76,7 +88,8 @@ function InlineScript() {
             console.error("Second hand not found");
             return;
           }
-          const time = new Date();
+          window.__INITIAL_TIME__ = Date.now();
+          const time = new Date(window.__INITIAL_TIME__);
           const secondRotation =
             time.getSeconds() * 6 + time.getMilliseconds() * 0.006;
           secondHand.setAttribute(

@@ -3,14 +3,12 @@
 import React, { useEffect, useRef, useState } from "react";
 
 interface PreArgs {
-  whenAvailable<T extends HTMLElement>(
-    ref: React.RefObject<T | null>,
-    fn: (el: T) => void
-  ): void;
+  whenAvailable<T>(ref: React.RefObject<T | null>, fn: (el: T) => void): void;
 }
 
 declare const $useState: typeof useState;
 declare const $useRef: typeof useRef;
+declare const $useEffect: typeof useEffect;
 /**
  * Inside $pre, you can:
  * - read or write to $state's
@@ -19,7 +17,7 @@ declare const $useRef: typeof useRef;
  */
 declare const $pre: {
   (fn: (args: PreArgs) => void): void;
-  effect: (fn: () => void | (() => void)) => void;
+  effect: (fn: () => void | (() => void), deps?: unknown[]) => void;
 };
 
 export default function Client() {
@@ -39,25 +37,20 @@ function Clock() {
 
   const secondRotation = time.getSeconds() * 6 + time.getMilliseconds() * 0.006;
 
-  $pre(() => {
-    const now = new Date();
-    setTime(now);
-    if (secondHand.current) {
-      const initialRotation =
-        now.getSeconds() * 6 + now.getMilliseconds() * 0.006;
-      secondHand.current.setAttribute(
-        "transform",
-        `rotate(${initialRotation}, 50, 50)`
-      );
-    }
+  $pre(({ whenAvailable }) => {
+    whenAvailable(secondHand, (hand) => {
+      $pre.effect(() => {
+        hand.setAttribute("transform", `rotate(${secondRotation}, 50, 50)`);
+      }, [time]);
+    });
   });
 
-  useEffect(() => {
+  $useEffect(() => {
     const timer = setInterval(() => {
       setTime(new Date());
     }, 100);
     return () => clearInterval(timer);
-  }, []);
+  }, [setTime]);
 
   return (
     <div>

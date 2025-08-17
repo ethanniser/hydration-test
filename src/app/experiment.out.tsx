@@ -10,11 +10,12 @@ declare global {
 }
 
 function readHandoff<T>(key: string, fallback: () => T): T {
+  console.log("readHandoff", key, globalThis.window && window.__PH__);
   if (typeof window !== "undefined") {
     const s = (window.__PH__ ||= {});
     if (key in s) {
       const v = s[key] as T;
-      delete s[key];
+      // delete s[key];
       return v;
     }
   }

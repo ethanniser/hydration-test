@@ -60,7 +60,9 @@ function ProfilePictureOrSigninButton({
                   .split(";")
                   .reduce((acc: Record<string, string>, cookie) => {
                     const [key, value] = cookie.split("=");
-                    acc[key.trim()] = decodeURIComponent(value.trim());
+                    if (key && value !== undefined) {
+                      acc[key.trim()] = decodeURIComponent(value.trim());
+                    }
                     return acc;
                   }, {});
               }
@@ -144,7 +146,9 @@ type Auth =
 function parseCookie(cookie: string) {
   return cookie.split(";").reduce((acc: Record<string, string>, cookie) => {
     const [key, value] = cookie.split("=");
-    acc[key.trim()] = decodeURIComponent(value.trim());
+    if (key && value !== undefined) {
+      acc[key.trim()] = decodeURIComponent(value.trim());
+    }
     return acc;
   }, {});
 }

@@ -112,14 +112,14 @@ function YouAreLoggedInOrSignOutButton() {
         auth.isSignedIn ? (
           <button
             onClick={auth.signOut}
-            className="bg-red-500 text-white p-2 rounded-md"
+            className="bg-red-500 text-white p-2 rounded-md hover:bg-red-700"
           >
             Sign out
           </button>
         ) : (
           <button
             onClick={auth.signIn}
-            className="bg-green-500 text-white p-2 rounded-md"
+            className="bg-green-500 text-white p-2 rounded-md hover:bg-green-700"
           >
             Sign in
           </button>
@@ -234,7 +234,7 @@ function ProfilePicture({ url }: { url: string }) {
 
 function SigninButton() {
   return (
-    <button className="bg-blue-500 text-white p-2 rounded-md">Sign in</button>
+    <button className="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-700">Sign in</button>
   );
 }
 
@@ -250,12 +250,18 @@ function HydrationIndicator() {
   const hasHydrated = useIsHydrated();
   if (!hasHydrated) {
     return (
-      <div className="bg-red-600 text-white p-2 rounded-md">
-        HTML from server, not yet hydrated
+    <div className="text-center py-4 lg:px-4">
+      <div className="p-2 bg-amber-700 items-center text-indigo-100 leading-none lg:rounded-full flex lg:inline-flex" role="alert">
+        <span className="flex uppercase px-2 py-1 text-xs font-bold">HTML from server, not yet hydrated</span>
       </div>
+    </div>
     );
   }
   return (
-    <div className="bg-green-600 text-white p-2 rounded-md">React hydrated</div>
+    <div className="text-center py-4 lg:px-4">
+      <div className="p-2 bg-cyan-700 items-center text-indigo-100 leading-none lg:rounded-full flex lg:inline-flex" role="alert">
+        <span className="flex uppercase px-2 py-1 text-xs font-bold">React hydrated</span>
+      </div>
+    </div>
   );
 }
